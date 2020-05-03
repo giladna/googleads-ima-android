@@ -3,6 +3,8 @@
 package com.google.ads.interactivemedia.v3.samples.videoplayerapp;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.ViewGroup;
@@ -12,17 +14,22 @@ import com.google.ads.interactivemedia.v3.api.player.AdMediaInfo;
 import com.google.ads.interactivemedia.v3.api.player.ContentProgressProvider;
 import com.google.ads.interactivemedia.v3.api.player.VideoAdPlayer;
 import com.google.ads.interactivemedia.v3.api.player.VideoProgressUpdate;
+import com.google.ads.interactivemedia.v3.samples.samplevideoplayer.SampleVideoPlayer;
 import com.google.ads.interactivemedia.v3.samples.samplevideoplayer.VideoPlayer;
+import com.google.android.exoplayer2.ui.PlayerView;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
 /** Video player that can play content video and ads. */
-public class VideoPlayerWithAdPlayback extends RelativeLayout {
+public class ExoPlayerWithAdPlayback extends RelativeLayout {
 
   // The wrapped video player.
   private VideoPlayer mVideoPlayer;
+  private Context context;
+  private PlayerView playerView;
 
   // A Timer to help track media updates
   private Timer timer;
@@ -59,16 +66,21 @@ public class VideoPlayerWithAdPlayback extends RelativeLayout {
   private final List<VideoAdPlayer.VideoAdPlayerCallback> mAdCallbacks =
       new ArrayList<VideoAdPlayer.VideoAdPlayerCallback>(1);
 
-  public VideoPlayerWithAdPlayback(Context context, AttributeSet attrs, int defStyle) {
+  public ExoPlayerWithAdPlayback(Context context, AttributeSet attrs, int defStyle) {
     super(context, attrs, defStyle);
+    this.context = context;
   }
 
-  public VideoPlayerWithAdPlayback(Context context, AttributeSet attrs) {
-    super(context, attrs);
+  public ExoPlayerWithAdPlayback(Context context, AttributeSet attrs) {
+      super(context, attrs);
+      this.context = context;
+
   }
 
-  public VideoPlayerWithAdPlayback(Context context) {
-    super(context);
+  public ExoPlayerWithAdPlayback(Context context) {
+      super(context);
+      this.context = context;
+
   }
 
   @Override
@@ -89,7 +101,14 @@ public class VideoPlayerWithAdPlayback extends RelativeLayout {
             // Tell IMA the current video progress. A better implementation would be
             // reactive to events from the media player, instead of polling.
             for (VideoAdPlayer.VideoAdPlayerCallback callback : mAdCallbacks) {
-              callback.onAdProgress(adMediaInfo, mVideoAdPlayer.getAdProgress());
+                if (playerView.getPlayer().isPlaying()) {
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.onAdProgress(adMediaInfo, mVideoAdPlayer.getAdProgress());
+                        }
+                    });
+                }
             }
           }
         };
@@ -110,8 +129,9 @@ public class VideoPlayerWithAdPlayback extends RelativeLayout {
     contentHasCompleted = false;
     mSavedAdPosition = 0;
     mSavedContentPosition = 0;
-    mVideoPlayer = (VideoPlayer) this.getRootView().findViewById(R.id.videoPlayer);
-    mAdUiContainer = (ViewGroup) this.getRootView().findViewById(R.id.adUiContainer);
+    playerView =  this.getRootView().findViewById(R.id.videoPlayer);
+    mAdUiContainer =  this.getRootView().findViewById(R.id.adUiContainer);
+    mVideoPlayer = new SampleVideoPlayer(context, playerView);
 
     // Define VideoAdPlayer connector.
     mVideoAdPlayer =
@@ -159,12 +179,12 @@ public class VideoPlayerWithAdPlayback extends RelativeLayout {
           @Override
           public void addCallback(VideoAdPlayerCallback videoAdPlayerCallback) {
             mAdCallbacks.add(videoAdPlayerCallback);
-          }
+        }
 
-          @Override
-          public void removeCallback(VideoAdPlayerCallback videoAdPlayerCallback) {
-            mAdCallbacks.remove(videoAdPlayerCallback);
-          }
+      @Override
+      public void removeCallback(VideoAdPlayerCallback videoAdPlayerCallback) {
+          mAdCallbacks.remove(videoAdPlayerCallback);
+      }
 
           @Override
           public VideoProgressUpdate getAdProgress() {
@@ -172,7 +192,7 @@ public class VideoPlayerWithAdPlayback extends RelativeLayout {
               return VideoProgressUpdate.VIDEO_TIME_NOT_READY;
             }
             return new VideoProgressUpdate(
-                mVideoPlayer.getCurrentPosition(), mVideoPlayer.getDuration());
+                    (long)(Math.ceil(mVideoPlayer.getCurrentPosition() / 1000.0) *1000), mVideoPlayer.getDuration());
           }
         };
 
@@ -184,7 +204,7 @@ public class VideoPlayerWithAdPlayback extends RelativeLayout {
               return VideoProgressUpdate.VIDEO_TIME_NOT_READY;
             }
             return new VideoProgressUpdate(
-                mVideoPlayer.getCurrentPosition(), mVideoPlayer.getDuration());
+                    (long)(Math.ceil(mVideoPlayer.getCurrentPosition() / 1000.0) *1000), mVideoPlayer.getDuration());
           }
         };
 
@@ -237,7 +257,7 @@ public class VideoPlayerWithAdPlayback extends RelativeLayout {
               contentHasCompleted = true;
               // Alert an external listener that our content video is complete.
               for (VideoAdPlayer.VideoAdPlayerCallback callback : mAdCallbacks) {
-                callback.onContentComplete();
+                //callback.onContentComplete();
               }
             }
           }

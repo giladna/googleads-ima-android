@@ -43,11 +43,11 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintDimensionRatio="16:9">
 
-            <com.google.ads.interactivemedia.v3.samples.videoplayerapp.VideoPlayerWithAdPlayback
+            <com.google.ads.interactivemedia.v3.samples.videoplayerapp.ExoPlayerWithAdPlayback
                 android:id="@+id/videoPlayerWithAdPlayback"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
-                <com.google.ads.interactivemedia.v3.samples.samplevideoplayer.SampleVideoPlayer
+                <com.google.android.exoplayer2.ui.PlayerView
                     android:id="@+id/videoPlayer"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -63,7 +63,7 @@
                     android:background="@null"
                     android:contentDescription="Play Button"
                     android:src="@drawable/ic_action_play_over_video"/>
-            </com.google.ads.interactivemedia.v3.samples.videoplayerapp.VideoPlayerWithAdPlayback>
+            </com.google.ads.interactivemedia.v3.samples.videoplayerapp.ExoPlayerWithAdPlayback>
         </LinearLayout>
 
         <!-- Video title/description area -->

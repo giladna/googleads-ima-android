@@ -54,7 +54,7 @@ public class VideoFragment extends Fragment {
   }
 
   private void initUi(View rootView) {
-    VideoPlayerWithAdPlayback mVideoPlayerWithAdPlayback =
+    ExoPlayerWithAdPlayback mExoPlayerWithAdPlayback =
         rootView.findViewById(R.id.videoPlayerWithAdPlayback);
     View playButton = rootView.findViewById(R.id.playButton);
     View playPauseToggle = rootView.findViewById(R.id.videoContainer);
@@ -90,7 +90,7 @@ public class VideoFragment extends Fragment {
     mVideoPlayerController =
         new VideoPlayerController(
             this.getActivity(),
-            mVideoPlayerWithAdPlayback,
+                mExoPlayerWithAdPlayback,
             playButton,
             playPauseToggle,
             getString(R.string.ad_ui_lang),

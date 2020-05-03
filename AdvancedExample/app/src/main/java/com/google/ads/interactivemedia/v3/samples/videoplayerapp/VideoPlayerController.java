@@ -14,10 +14,8 @@ import com.google.ads.interactivemedia.v3.api.AdsManager;
 import com.google.ads.interactivemedia.v3.api.AdsManagerLoadedEvent;
 import com.google.ads.interactivemedia.v3.api.AdsRenderingSettings;
 import com.google.ads.interactivemedia.v3.api.AdsRequest;
-import com.google.ads.interactivemedia.v3.api.CompanionAdSlot;
 import com.google.ads.interactivemedia.v3.api.ImaSdkFactory;
 import com.google.ads.interactivemedia.v3.api.ImaSdkSettings;
-import java.util.ArrayList;
 
 /** Ads logic for handling the IMA SDK integration code and events. */
 public class VideoPlayerController {
@@ -40,7 +38,7 @@ public class VideoPlayerController {
   private ImaSdkFactory mSdkFactory;
 
   // Ad-enabled video player.
-  private VideoPlayerWithAdPlayback mVideoPlayerWithAdPlayback;
+  private ExoPlayerWithAdPlayback mExoPlayerWithAdPlayback;
 
   // Button the user taps to begin video playback and ad request.
   private View mPlayButton;
@@ -92,7 +90,7 @@ public class VideoPlayerController {
             /** Responds to AdEvents. */
             @Override
             public void onAdEvent(AdEvent adEvent) {
-              log("Event: " + adEvent.getType());
+              log("Event: " + adEvent.getType() + " ");
 
               // These are the suggested event types to handle. For full list of all ad
               // event types, see the documentation for AdEvent.AdEventType.
@@ -113,6 +111,10 @@ public class VideoPlayerController {
                   // AdEventType.CONTENT_RESUME_REQUESTED is fired when the ad is
                   // completed and you should start playing your content.
                   resumeContent();
+                  break;
+                case AD_PROGRESS:
+                  log("Event: " + adEvent.getType() + " " + mExoPlayerWithAdPlayback.getVideoAdPlayer().getAdProgress().getCurrentTime());
+
                   break;
                 case PAUSED:
                   mIsAdPlaying = false;
@@ -141,14 +143,14 @@ public class VideoPlayerController {
   }
 
   public VideoPlayerController(
-      Context context,
-      VideoPlayerWithAdPlayback videoPlayerWithAdPlayback,
-      View playButton,
-      View playPauseToggle,
-      String language,
-      ViewGroup companionViewGroup,
-      Logger log) {
-    mVideoPlayerWithAdPlayback = videoPlayerWithAdPlayback;
+          Context context,
+          ExoPlayerWithAdPlayback exoPlayerWithAdPlayback,
+          View playButton,
+          View playPauseToggle,
+          String language,
+          ViewGroup companionViewGroup,
+          Logger log) {
+    mExoPlayerWithAdPlayback = exoPlayerWithAdPlayback;
     mPlayButton = playButton;
     mPlayPauseToggle = playPauseToggle;
     mIsAdPlaying = false;
@@ -162,8 +164,8 @@ public class VideoPlayerController {
 
     mAdDisplayContainer =
         ImaSdkFactory.createAdDisplayContainer(
-            mVideoPlayerWithAdPlayback.getAdUiContainer(),
-            mVideoPlayerWithAdPlayback.getVideoAdPlayer());
+            mExoPlayerWithAdPlayback.getAdUiContainer(),
+            mExoPlayerWithAdPlayback.getVideoAdPlayer());
     mAdsLoader = mSdkFactory.createAdsLoader(context, imaSdkSettings, mAdDisplayContainer);
 
     mAdsLoader.addAdErrorListener(
@@ -195,13 +197,13 @@ public class VideoPlayerController {
   }
 
   private void pauseContent() {
-    mVideoPlayerWithAdPlayback.pauseContentForAdPlayback();
+    mExoPlayerWithAdPlayback.pauseContentForAdPlayback();
     mIsAdPlaying = true;
     setPlayPauseOnAdTouch();
   }
 
   private void resumeContent() {
-    mVideoPlayerWithAdPlayback.resumeContentAfterAdPlayback();
+    mExoPlayerWithAdPlayback.resumeContentAfterAdPlayback();
     mIsAdPlaying = false;
     removePlayPauseOnAdTouch();
   }
@@ -234,7 +236,7 @@ public class VideoPlayerController {
     // Create the ads request.
     AdsRequest request = mSdkFactory.createAdsRequest();
     request.setAdTagUrl(mCurrentAdTagUrl);
-    request.setContentProgressProvider(mVideoPlayerWithAdPlayback.getContentProgressProvider());
+    request.setContentProgressProvider(mExoPlayerWithAdPlayback.getContentProgressProvider());
 
     mPlayAdsAfterTime = playAdsAfterTime;
 
@@ -274,7 +276,7 @@ public class VideoPlayerController {
    * just a URL and could trigger additional decisions regarding ad tag selection.
    */
   public void setContentVideo(String videoPath) {
-    mVideoPlayerWithAdPlayback.setContentVideoPath(videoPath);
+    mExoPlayerWithAdPlayback.setContentVideoPath(videoPath);
     mContentVideoUrl = videoPath;
   }
 
@@ -287,11 +289,11 @@ public class VideoPlayerController {
    * example.
    */
   public void pause() {
-    mVideoPlayerWithAdPlayback.savePosition();
-    if (mAdsManager != null && mVideoPlayerWithAdPlayback.getIsAdDisplayed()) {
+    mExoPlayerWithAdPlayback.savePosition();
+    if (mAdsManager != null && mExoPlayerWithAdPlayback.getIsAdDisplayed()) {
       mAdsManager.pause();
     } else {
-      mVideoPlayerWithAdPlayback.pause();
+      mExoPlayerWithAdPlayback.pause();
     }
   }
 
@@ -300,11 +302,11 @@ public class VideoPlayerController {
    * resumed.
    */
   public void resume() {
-    mVideoPlayerWithAdPlayback.restorePosition();
-    if (mAdsManager != null && mVideoPlayerWithAdPlayback.getIsAdDisplayed()) {
+    mExoPlayerWithAdPlayback.restorePosition();
+    if (mAdsManager != null && mExoPlayerWithAdPlayback.getIsAdDisplayed()) {
       mAdsManager.resume();
     } else {
-      mVideoPlayerWithAdPlayback.play();
+      mExoPlayerWithAdPlayback.play();
     }
   }
 
@@ -322,12 +324,12 @@ public class VideoPlayerController {
 
   /** Seeks to time in content video in seconds. */
   public void seek(double time) {
-    mVideoPlayerWithAdPlayback.seek((int) (time * 1000.0));
+    mExoPlayerWithAdPlayback.seek((int) (time * 1000.0));
   }
 
   /** Returns the current time of the content video in seconds. */
   public double getCurrentContentTime() {
-    return ((double) mVideoPlayerWithAdPlayback.getCurrentContentTime()) / 1000.0;
+    return ((double) mExoPlayerWithAdPlayback.getCurrentContentTime()) / 1000.0;
   }
 
   public boolean hasVideoStarted() {
